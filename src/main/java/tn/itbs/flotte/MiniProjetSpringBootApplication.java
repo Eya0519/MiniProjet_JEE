@@ -1,4 +1,4 @@
-package com.example.demo;
+package tn.itbs.flotte;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
