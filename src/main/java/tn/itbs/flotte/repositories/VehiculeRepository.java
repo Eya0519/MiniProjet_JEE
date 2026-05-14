@@ -11,5 +11,5 @@ public interface VehiculeRepository extends JpaRepository<Vehicule, Integer> {
 	List<Vehicule> findByStatut(String statut);
 
     List<Vehicule> findByType(String type);
-
+    List<Vehicule> findByKilometrageGreaterThan(double kilometrage);
 }
