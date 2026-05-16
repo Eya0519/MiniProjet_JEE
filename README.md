@@ -112,92 +112,59 @@ Pour supprimer aussi les donnees MySQL Docker :
 docker compose down -v
 ```
 
-## Preparation au deploiement Google Cloud Platform
+## Deploiement Cloud
 
-Architecture recommandee :
+L'application a ete deployee sur Google Cloud Platform avec Cloud Run et Cloud SQL.
 
-```text
-Frontend Angular  -> Cloud Run
-Backend Spring    -> Cloud Run
-Base MySQL        -> Cloud SQL
-Images Docker     -> Artifact Registry
-```
-
-### Variables importantes
-
-Back-end Cloud Run :
+Liens de demonstration :
 
 ```text
-PORT=8080
-SPRING_DATASOURCE_URL=jdbc:mysql:///flotte_db?cloudSqlInstance=PROJECT_ID:REGION:INSTANCE_NAME&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false
-SPRING_DATASOURCE_USERNAME=root
-SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD
-APP_CORS_ALLOWED_ORIGINS=https://FRONTEND_URL.run.app
+Frontend Cloud Run:
+https://flotte-frontend-686322940226.europe-west1.run.app
+
+Backend Swagger Cloud Run:
+https://flotte-backend-686322940226.europe-west1.run.app/swagger-ui.html
 ```
 
-Front-end Cloud Run :
+Services utilises :
 
 ```text
-PORT=8080
-API_URL=https://BACKEND_URL.run.app
+Cloud Run        : backend Spring Boot et frontend Angular
+Cloud SQL        : base de donnees MySQL
+Artifact Registry: stockage des images Docker
+Cloud Build      : build et push des images Docker
 ```
 
-### Commandes indicatives
+## Notes metier
 
-Remplacer :
+### Maintenance preventive
+
+Le suivi de maintenance preventive est base sur le kilometrage du vehicule. Les vehicules avec un kilometrage superieur a `100000 km` sont affiches dans la liste de maintenance preventive.
+
+Endpoint :
 
 ```text
-PROJECT_ID
-REGION
-REPOSITORY
-INSTANCE_NAME
+GET /vehicules/maintenance
 ```
 
-Creer un repository Docker Artifact Registry :
+### Couts carburant
 
-```bash
-gcloud artifacts repositories create REPOSITORY --repository-format=docker --location=REGION
+Les consommations representent des donnees reelles de ravitaillement. L'utilisateur saisit la quantite de carburant et le cout total. Le tableau de bord agrege ensuite les couts par vehicule.
+
+Endpoint :
+
+```text
+GET /dashboard/fuel-costs
 ```
 
-Construire et pousser le back-end :
+### Utilisation de la flotte
 
-```bash
-gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-backend:latest .
-```
+L'utilisation de la flotte est calculee selon le nombre de missions affectees a chaque vehicule. Les vehicules les plus actifs sont ceux qui possedent le plus de missions.
 
-Construire et pousser le front-end :
+Endpoint :
 
-```bash
-gcloud builds submit ./frontend --tag REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-frontend:latest
-```
-
-Deployer le back-end sur Cloud Run :
-
-```bash
-gcloud run deploy flotte-backend ^
-  --image REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-backend:latest ^
-  --region REGION ^
-  --allow-unauthenticated ^
-  --add-cloudsql-instances PROJECT_ID:REGION:INSTANCE_NAME ^
-  --set-env-vars SPRING_DATASOURCE_URL="jdbc:mysql:///flotte_db?cloudSqlInstance=PROJECT_ID:REGION:INSTANCE_NAME&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false",SPRING_DATASOURCE_USERNAME=root,SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD
-```
-
-Apres creation du front-end, mettre a jour le CORS du back-end avec l'URL front-end :
-
-```bash
-gcloud run services update flotte-backend ^
-  --region REGION ^
-  --set-env-vars APP_CORS_ALLOWED_ORIGINS=https://FRONTEND_URL.run.app
-```
-
-Deployer le front-end sur Cloud Run :
-
-```bash
-gcloud run deploy flotte-frontend ^
-  --image REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-frontend:latest ^
-  --region REGION ^
-  --allow-unauthenticated ^
-  --set-env-vars API_URL=https://BACKEND_URL.run.app
+```text
+GET /dashboard/fleet-usage
 ```
 
 ## Endpoints principaux
