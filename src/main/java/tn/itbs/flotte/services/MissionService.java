@@ -25,6 +25,17 @@ public class MissionService {
     @Autowired
     private ChauffeurRepository crepo;
 
+    public Mission chercherParId(int id) {
+        return mrepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Mission non trouvee"));
+    }
+
+    public List<Mission> chercherTout() {
+        return mrepo.findAll();
+    }
+
     // -------------------------
     // AJOUT MISSION
     // -------------------------
@@ -60,6 +71,8 @@ public class MissionService {
                     m.setPointDepart(mi.getPointDepart());
                     m.setDestination(mi.getDestination());
                     m.setDistance(mi.getDistance());
+                    m.setVehicule(mi.getVehicule());
+                    m.setChauffeur(mi.getChauffeur());
 
                     mrepo.save(m);
 

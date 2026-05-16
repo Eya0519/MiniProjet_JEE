@@ -17,6 +17,16 @@ public class VehiculeService {
 	@Autowired
     private VehiculeRepository vrepo;
 
+    public Vehicule chercherParId(int id) {
+        return vrepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Vehicule non trouve"));
+    }
+
+    public List<Vehicule> chercherTout() {
+        return vrepo.findAll();
+    }
 
     public List<Vehicule> trouverVehiculesParStatut(String statut) {
         return vrepo.findByStatut(statut);
