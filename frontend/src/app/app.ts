@@ -59,6 +59,10 @@ interface FleetUsage {
   nombreMissions: number;
 }
 
+interface RuntimeConfig {
+  apiUrl?: string;
+}
+
 type Tab = 'dashboard' | 'vehicules' | 'chauffeurs' | 'missions' | 'consommations';
 
 @Component({
@@ -96,7 +100,19 @@ export class App implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.refreshAll();
+    this.loadRuntimeConfig();
+  }
+
+  loadRuntimeConfig(): void {
+    this.http.get<RuntimeConfig>('/config.json').subscribe({
+      next: config => {
+        if (config.apiUrl) {
+          this.apiUrl = config.apiUrl;
+        }
+        this.refreshAll();
+      },
+      error: () => this.refreshAll()
+    });
   }
 
   setTab(tab: Tab): void {

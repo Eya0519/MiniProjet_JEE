@@ -112,6 +112,94 @@ Pour supprimer aussi les donnees MySQL Docker :
 docker compose down -v
 ```
 
+## Preparation au deploiement Google Cloud Platform
+
+Architecture recommandee :
+
+```text
+Frontend Angular  -> Cloud Run
+Backend Spring    -> Cloud Run
+Base MySQL        -> Cloud SQL
+Images Docker     -> Artifact Registry
+```
+
+### Variables importantes
+
+Back-end Cloud Run :
+
+```text
+PORT=8080
+SPRING_DATASOURCE_URL=jdbc:mysql:///flotte_db?cloudSqlInstance=PROJECT_ID:REGION:INSTANCE_NAME&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD
+APP_CORS_ALLOWED_ORIGINS=https://FRONTEND_URL.run.app
+```
+
+Front-end Cloud Run :
+
+```text
+PORT=8080
+API_URL=https://BACKEND_URL.run.app
+```
+
+### Commandes indicatives
+
+Remplacer :
+
+```text
+PROJECT_ID
+REGION
+REPOSITORY
+INSTANCE_NAME
+```
+
+Creer un repository Docker Artifact Registry :
+
+```bash
+gcloud artifacts repositories create REPOSITORY --repository-format=docker --location=REGION
+```
+
+Construire et pousser le back-end :
+
+```bash
+gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-backend:latest .
+```
+
+Construire et pousser le front-end :
+
+```bash
+gcloud builds submit ./frontend --tag REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-frontend:latest
+```
+
+Deployer le back-end sur Cloud Run :
+
+```bash
+gcloud run deploy flotte-backend ^
+  --image REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-backend:latest ^
+  --region REGION ^
+  --allow-unauthenticated ^
+  --add-cloudsql-instances PROJECT_ID:REGION:INSTANCE_NAME ^
+  --set-env-vars SPRING_DATASOURCE_URL="jdbc:mysql:///flotte_db?cloudSqlInstance=PROJECT_ID:REGION:INSTANCE_NAME&socketFactory=com.google.cloud.sql.mysql.SocketFactory&useSSL=false",SPRING_DATASOURCE_USERNAME=root,SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD
+```
+
+Apres creation du front-end, mettre a jour le CORS du back-end avec l'URL front-end :
+
+```bash
+gcloud run services update flotte-backend ^
+  --region REGION ^
+  --set-env-vars APP_CORS_ALLOWED_ORIGINS=https://FRONTEND_URL.run.app
+```
+
+Deployer le front-end sur Cloud Run :
+
+```bash
+gcloud run deploy flotte-frontend ^
+  --image REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/flotte-frontend:latest ^
+  --region REGION ^
+  --allow-unauthenticated ^
+  --set-env-vars API_URL=https://BACKEND_URL.run.app
+```
+
 ## Endpoints principaux
 
 ```text
