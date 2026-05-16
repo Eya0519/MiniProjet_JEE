@@ -1,0 +1,302 @@
+<main class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">F</span>
+      <div>
+        <h1>Flotte</h1>
+        <p>Gestion vehicules</p>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button type="button" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">Dashboard</button>
+      <button type="button" [class.active]="activeTab === 'vehicules'" (click)="setTab('vehicules')">Vehicules</button>
+      <button type="button" [class.active]="activeTab === 'chauffeurs'" (click)="setTab('chauffeurs')">Chauffeurs</button>
+      <button type="button" [class.active]="activeTab === 'missions'" (click)="setTab('missions')">Missions</button>
+      <button type="button" [class.active]="activeTab === 'consommations'" (click)="setTab('consommations')">Consommations</button>
+    </nav>
+  </aside>
+
+  <section class="content">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Plateforme de gestion de flotte</p>
+        <h2>{{ activeTab }}</h2>
+      </div>
+      <button type="button" class="secondary" (click)="refreshAll()">Actualiser</button>
+    </header>
+
+    <p class="notice success" *ngIf="message">{{ message }}</p>
+    <p class="notice error" *ngIf="error">{{ error }}</p>
+
+    <section *ngIf="activeTab === 'dashboard'" class="stack">
+      <div class="metrics">
+        <article>
+          <span>Disponibles</span>
+          <strong>{{ dashboard.vehiculesDisponibles }}</strong>
+        </article>
+        <article>
+          <span>En panne</span>
+          <strong>{{ dashboard.vehiculesEnPanne }}</strong>
+        </article>
+        <article>
+          <span>Cout carburant</span>
+          <strong>{{ dashboard.coutCarburantTotal | number:'1.0-2' }} TND</strong>
+        </article>
+      </div>
+
+      <div class="grid two">
+        <section class="panel">
+          <h3>Couts carburant par vehicule</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicule</th>
+                <th>Modele</th>
+                <th>Cout</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of fuelCosts">
+                <td>{{ item.immatriculation }}</td>
+                <td>{{ item.modele }}</td>
+                <td>{{ item.coutTotal | number:'1.0-2' }} TND</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="panel">
+          <h3>Vehicules les plus actifs</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicule</th>
+                <th>Modele</th>
+                <th>Missions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of fleetUsage">
+                <td>{{ item.immatriculation }}</td>
+                <td>{{ item.modele }}</td>
+                <td>{{ item.nombreMissions }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <section class="panel">
+        <h3>Maintenance preventive</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Immatriculation</th>
+              <th>Modele</th>
+              <th>Kilometrage</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of maintenanceVehicules">
+              <td>{{ v.immatriculation }}</td>
+              <td>{{ v.modele }}</td>
+              <td>{{ v.kilometrage | number:'1.0-0' }} km</td>
+              <td><span class="badge">{{ v.statut }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <section *ngIf="activeTab === 'vehicules'" class="grid main-grid">
+      <form class="panel form" (ngSubmit)="saveVehicule()">
+        <h3>{{ vehiculeForm.idv ? 'Modifier vehicule' : 'Ajouter vehicule' }}</h3>
+        <label>Immatriculation <input name="immatriculation" [(ngModel)]="vehiculeForm.immatriculation" required></label>
+        <label>Modele <input name="modele" [(ngModel)]="vehiculeForm.modele" required></label>
+        <label>Type <input name="type" [(ngModel)]="vehiculeForm.type" required></label>
+        <label>Kilometrage <input type="number" name="kilometrage" [(ngModel)]="vehiculeForm.kilometrage" min="0"></label>
+        <label>Statut
+          <select name="statut" [(ngModel)]="vehiculeForm.statut">
+            <option value="DISPONIBLE">DISPONIBLE</option>
+            <option value="EN_MISSION">EN_MISSION</option>
+            <option value="EN_PANNE">EN_PANNE</option>
+            <option value="MAINTENANCE">MAINTENANCE</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button type="submit">Enregistrer</button>
+          <button type="button" class="secondary" (click)="vehiculeForm = emptyVehicule()">Annuler</button>
+        </div>
+      </form>
+
+      <section class="panel">
+        <h3>Liste des vehicules</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Immatriculation</th>
+              <th>Modele</th>
+              <th>Type</th>
+              <th>Km</th>
+              <th>Statut</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of vehicules">
+              <td>{{ v.immatriculation }}</td>
+              <td>{{ v.modele }}</td>
+              <td>{{ v.type }}</td>
+              <td>{{ v.kilometrage | number:'1.0-0' }}</td>
+              <td><span class="badge">{{ v.statut }}</span></td>
+              <td class="row-actions">
+                <button type="button" class="link" (click)="editVehicule(v)">Modifier</button>
+                <button type="button" class="danger" (click)="deleteVehicule(v.idv)">Supprimer</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <section *ngIf="activeTab === 'chauffeurs'" class="grid main-grid">
+      <form class="panel form" (ngSubmit)="saveChauffeur()">
+        <h3>{{ chauffeurForm.idc ? 'Modifier chauffeur' : 'Ajouter chauffeur' }}</h3>
+        <label>Nom <input name="nom" [(ngModel)]="chauffeurForm.nom" required></label>
+        <label>Permis <input name="permis" [(ngModel)]="chauffeurForm.permis" required></label>
+        <label>Experience <input type="number" name="experience" [(ngModel)]="chauffeurForm.experience" min="0"></label>
+        <div class="actions">
+          <button type="submit">Enregistrer</button>
+          <button type="button" class="secondary" (click)="chauffeurForm = emptyChauffeur()">Annuler</button>
+        </div>
+      </form>
+
+      <section class="panel">
+        <h3>Liste des chauffeurs</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Permis</th>
+              <th>Experience</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of chauffeurs">
+              <td>{{ c.nom }}</td>
+              <td>{{ c.permis }}</td>
+              <td>{{ c.experience }} ans</td>
+              <td class="row-actions">
+                <button type="button" class="link" (click)="editChauffeur(c)">Modifier</button>
+                <button type="button" class="danger" (click)="deleteChauffeur(c.idc)">Supprimer</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <section *ngIf="activeTab === 'missions'" class="grid main-grid">
+      <form class="panel form" (ngSubmit)="saveMission()">
+        <h3>{{ missionForm.idm ? 'Modifier mission' : 'Ajouter mission' }}</h3>
+        <label>Point depart <input name="pointDepart" [(ngModel)]="missionForm.pointDepart" required></label>
+        <label>Destination <input name="destination" [(ngModel)]="missionForm.destination" required></label>
+        <label>Distance <input type="number" name="distance" [(ngModel)]="missionForm.distance" min="1"></label>
+        <label>Vehicule
+          <select name="vehiculeId" [(ngModel)]="missionForm.vehiculeId">
+            <option [ngValue]="undefined">Non affecte</option>
+            <option *ngFor="let v of vehicules" [ngValue]="v.idv">{{ v.immatriculation }} - {{ v.modele }}</option>
+          </select>
+        </label>
+        <label>Chauffeur
+          <select name="chauffeurId" [(ngModel)]="missionForm.chauffeurId">
+            <option [ngValue]="undefined">Non affecte</option>
+            <option *ngFor="let c of chauffeurs" [ngValue]="c.idc">{{ c.nom }}</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button type="submit">Enregistrer</button>
+          <button type="button" class="secondary" (click)="missionForm = emptyMission()">Annuler</button>
+        </div>
+      </form>
+
+      <section class="panel">
+        <h3>Liste des missions</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Depart</th>
+              <th>Destination</th>
+              <th>Distance</th>
+              <th>Vehicule</th>
+              <th>Chauffeur</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of missions">
+              <td>{{ m.pointDepart }}</td>
+              <td>{{ m.destination }}</td>
+              <td>{{ m.distance }} km</td>
+              <td>{{ m.vehiculeImmatriculation || '-' }}</td>
+              <td>{{ m.chauffeurNom || '-' }}</td>
+              <td class="row-actions">
+                <button type="button" class="link" (click)="editMission(m)">Modifier</button>
+                <button type="button" class="danger" (click)="deleteMission(m.idm)">Supprimer</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <section *ngIf="activeTab === 'consommations'" class="grid main-grid">
+      <form class="panel form" (ngSubmit)="saveConsommation()">
+        <h3>{{ consommationForm.idco ? 'Modifier consommation' : 'Ajouter consommation' }}</h3>
+        <label>Date <input type="date" name="dateConsommation" [(ngModel)]="consommationForm.dateConsommation" required></label>
+        <label>Quantite carburant <input type="number" name="quantiteCarburant" [(ngModel)]="consommationForm.quantiteCarburant" min="1"></label>
+        <label>Cout total <input type="number" name="coutTotal" [(ngModel)]="consommationForm.coutTotal" min="0"></label>
+        <label>Vehicule
+          <select name="consVehiculeId" [(ngModel)]="consommationForm.vehiculeId">
+            <option [ngValue]="undefined">Choisir</option>
+            <option *ngFor="let v of vehicules" [ngValue]="v.idv">{{ v.immatriculation }} - {{ v.modele }}</option>
+          </select>
+        </label>
+        <div class="actions">
+          <button type="submit">Enregistrer</button>
+          <button type="button" class="secondary" (click)="consommationForm = emptyConsommation()">Annuler</button>
+        </div>
+      </form>
+
+      <section class="panel">
+        <h3>Liste des consommations</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicule</th>
+              <th>Quantite</th>
+              <th>Cout</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of consommations">
+              <td>{{ formatDate(c.dateConsommation) }}</td>
+              <td>{{ c.vehiculeImmatriculation || '-' }}</td>
+              <td>{{ c.quantiteCarburant }} L</td>
+              <td>{{ c.coutTotal | number:'1.0-2' }} TND</td>
+              <td class="row-actions">
+                <button type="button" class="link" (click)="editConsommation(c)">Modifier</button>
+                <button type="button" class="danger" (click)="deleteConsommation(c.idco)">Supprimer</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+  </section>
+</main>
